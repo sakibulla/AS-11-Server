@@ -72,5 +72,99 @@ app.get("/users/:email/role", async (req, res) => {
   res.send({ role: user?.role || "user" });
 });
 
+// Users route
+app.post('/users', async (req, res) => {
+  try {
+    const user = req.body;
+    user.role = 'user';
+    user.createdAt = new Date();
+
+    const email = user.email;
+    const userExists = await usersCollection.findOne({ email }); // ✅ use correct collection
+    if (userExists) {
+      return res.send({ message: 'User already exists' }); // ✅ fixed typo
+    }
+
+    const result = await usersCollection.insertOne(user);
+    res.status(201).json({
+      success: true,
+      message: 'User created successfully',
+      insertedId: result.insertedId.toString()
+    });
+  } catch (err) {
+    console.error('Failed to create user:', err);
+    res.status(500).json({ success: false, message: 'Failed to create user' });
+  }
+});
 
 
+   // -------------------------------
+    // Services Routes
+    // -------------------------------
+    // Add new service
+// UPDATE service
+    app.put('/services/:id', async (req, res) => {
+      const { id } = req.params;
+      if (!ObjectId.isValid(id)) return res.status(400).json({ success: false, message: 'Invalid ID' });
+
+      const updatedData = req.body; // Can contain serviceName, serviceType, price, description, image
+
+      try {
+        const result = await serviceCollection.updateOne(
+          { _id: new ObjectId(id) },
+          { $set: updatedData }
+        );
+
+        if (result.matchedCount === 0) {
+          return res.status(404).json({ success: false, message: 'Service not found' });
+        }
+
+        res.json({ success: true, modifiedCount: result.modifiedCount });
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Server error' });
+      }
+    });
+
+    // DELETE service
+    app.delete('/services/:id', async (req, res) => {
+      const { id } = req.params;
+      if (!ObjectId.isValid(id)) return res.status(400).json({ success: false, message: 'Invalid ID' });
+
+      try {
+        const result = await serviceCollection.deleteOne({ _id: new ObjectId(id) });
+        if (result.deletedCount === 0) {
+          return res.status(404).json({ success: false, message: 'Service not found' });
+        }
+        res.json({ success: true, deletedCount: result.deletedCount });
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Server error' });
+      }
+    });
+
+
+    app.post('/services', async (req, res) => {
+  try {
+    const { serviceName, serviceType, price, description, image } = req.body;
+
+    if (!serviceName || !serviceType || !price || !description || !image) {
+      return res.status(400).json({ success: false, message: 'All fields are required' });
+    }
+
+    const newService = {
+      serviceName,
+      serviceType,
+      price,
+      description,
+      image, // This is the URL from ImgBB
+    };
+
+    const result = await serviceCollection.insertOne(newService);
+
+    res.status(201).json({ success: true, service: { ...newService, _id: result.insertedId } });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
