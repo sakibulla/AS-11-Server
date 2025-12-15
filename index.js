@@ -325,4 +325,131 @@ app.patch('/bookings/:id/assign-decorator', async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
+// Analytics// Analytics
+
+// Inside your run() function, after initializing bookingsCollection
+app.get("/analytics/service-demand", async (req, res) => {
+  try {
+    // Aggregate bookings to count number of bookings per service
+    const result = await bookingsCollection.aggregate([
+      {
+        $group: {
+          _id: { $ifNull: ["$serviceName", "Unknown Service"] },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          serviceName: "$_id",
+          count: 1,
+        },
+      },
+      { $sort: { count: -1 } },
+    ]).toArray();
+
+    res.json(result); // e.g., [{ serviceName: "Birthday Party", count: 3 }, ...]
+  } catch (error) {
+    console.error("Service Demand Error:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+
+
+
+
+// Update booking status (used by AssignedDecorator frontend)
+app.patch('/bookings/:id/status', async (req, res) => {
+  const { id } = req.params;
+  const { bookingStatus } = req.body;
+
+  if (!ObjectId.isValid(id)) {
+    return res.status(400).json({ success: false, message: 'Invalid booking ID' });
+  }
+
+  if (!bookingStatus) {
+    return res.status(400).json({ success: false, message: 'bookingStatus is required' });
+  }
+
+  try {
+    const result = await bookingsCollection.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: { bookingStatus } }
+    );
+
+    if (result.modifiedCount === 1) {
+      res.json({ success: true, message: 'Booking status updated successfully' });
+    } else {
+      res.json({ success: false, message: 'No changes made' });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
 // Analytics
+
+// Inside your run() function, after initializing bookingsCollection
+app.get("/analytics/service-demand", async (req, res) => {
+  try {
+    // Aggregate bookings to count number of bookings per service
+    const result = await bookingsCollection.aggregate([
+      {
+        $group: {
+          _id: { $ifNull: ["$serviceName", "Unknown Service"] },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          serviceName: "$_id",
+          count: 1,
+        },
+      },
+      { $sort: { count: -1 } },
+    ]).toArray();
+
+    res.json(result); // e.g., [{ serviceName: "Birthday Party", count: 3 }, ...]
+  } catch (error) {
+    console.error("Service Demand Error:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+
+
+
+
+// Update booking status (used by AssignedDecorator frontend)
+app.patch('/bookings/:id/status', async (req, res) => {
+  const { id } = req.params;
+  const { bookingStatus } = req.body;
+
+  if (!ObjectId.isValid(id)) {
+    return res.status(400).json({ success: false, message: 'Invalid booking ID' });
+  }
+
+  if (!bookingStatus) {
+    return res.status(400).json({ success: false, message: 'bookingStatus is required' });
+  }
+
+  try {
+    const result = await bookingsCollection.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: { bookingStatus } }
+    );
+
+    if (result.modifiedCount === 1) {
+      res.json({ success: true, message: 'Booking status updated successfully' });
+    } else {
+      res.json({ success: false, message: 'No changes made' });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
