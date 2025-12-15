@@ -491,4 +491,59 @@ app.patch('/bookings/:id/status', async (req, res) => {
         console.error(err);
         res.status(500).json({ message: 'Failed to create checkout session' });
       }
+    });// -------------------------------
+    // Payment success route
+    // -------------------------------
+    app.patch('/payment-success', async (req, res) => {
+      const sessionId = req.query.session_id;
+      if (!sessionId) return res.status(400).json({ message: 'No session ID provided' });
+
+      try {
+        const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+        if (session.payment_status === 'paid') {
+          const bookingId = session.metadata.bookingId;
+
+          // Update booking status
+          const result = await bookingsCollection.updateOne(
+            { _id: new ObjectId(bookingId) },
+            { $set: { status: 'paid',bookingStatus:'Pending' } }
+          );
+
+          // Generate trackingId
+          const trackingId = 'TRK' + Date.now();
+
+          // Prepare payment object
+          const payment = {
+            amount: session.amount_total / 100,
+            currency: session.currency,
+            customerEmail: session.customer_email,
+            parcelId: session.metadata.parcelId,
+            parcelName: session.metadata.parcelName,
+            transactionId: session.payment_intent,
+            paymentStatus: session.payment_status,
+            paidAt: new Date(),
+            trackingId: trackingId
+          };
+
+          // Check for duplicate payment
+          const existingPayment = await paymentCollection.findOne({ transactionId: session.payment_intent });
+          if (!existingPayment) {
+            await paymentCollection.insertOne(payment);
+          }
+
+          return res.json({
+            success: true,
+            modifyParcel: result,
+            trackingId: trackingId,
+            transactionId: session.payment_intent,
+            paymentInfo: payment
+          });
+        } else {
+          return res.status(400).json({ success: false, message: 'Payment not completed' });
+        }
+      } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Failed to update payment status' });
+      }
     });
