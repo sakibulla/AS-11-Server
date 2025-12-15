@@ -547,3 +547,51 @@ app.patch('/bookings/:id/status', async (req, res) => {
         res.status(500).json({ message: 'Failed to update payment status' });
       }
     });
+ // -------------------------------
+    // Stripe webhook
+    // -------------------------------
+    app.post(
+      "/webhook",
+      express.raw({ type: "application/json" }),
+      async (req, res) => {
+        const sig = req.headers["stripe-signature"];
+        let event;
+        try {
+          event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+        } catch (err) {
+          console.error(err.message);
+          return res.status(400).send(`Webhook Error: ${err.message}`);
+        }
+
+        if (event.type === "checkout.session.completed") {
+          const session = event.data.object;
+          await bookingsCollection.updateOne(
+            { sessionId: session.id },
+            { $set: { status: "paid" } }
+          );
+          console.log(`Booking updated to paid for sessionId: ${session.id}`);
+        }
+
+        res.json({ received: true });
+      }
+    );  // -------------------------------
+// Payment History Routes
+// -------------------------------
+
+// Get all payments or filter by customer email
+app.get('/payments', async (req, res) => {
+  const { customerEmail } = req.query;
+
+  if (!customerEmail) {
+    return res.status(400).json({ message: 'customerEmail is required' });
+  }
+
+  const payments = await paymentCollection.find({ customerEmail }).toArray();
+  res.json(
+    payments.map(payment => ({
+      ...payment,
+      _id: payment._id.toString(),
+      paidAt: payment.paidAt ? payment.paidAt.toISOString() : null,
+    }))
+  );
+});
