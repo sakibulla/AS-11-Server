@@ -842,3 +842,24 @@ app.post('/decorator', async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to submit decorator application' });
   }
 });
+
+    // -------------------------------
+    // Get booking by session ID
+    // -------------------------------
+    app.get('/bookings/session/:sessionId', async (req, res) => {
+      const { sessionId } = req.params;
+      const booking = await bookingsCollection.findOne({ sessionId });
+      if (!booking) return res.status(404).json({ message: 'Booking not found' });
+      res.json({ status: booking.status, _id: booking._id.toString(), ...booking });
+    });
+
+    console.log("✅ MongoDB Connected and API routes ready!");
+  } finally {
+    // keep connection alive
+  }
+}
+
+run().catch(console.dir);
+
+app.get('/', (req, res) => res.send("Server running"));
+app.listen(port, () => console.log(`🚀 Server listening on port ${port}`));
