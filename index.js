@@ -594,4 +594,22 @@ app.get('/payments', async (req, res) => {
       paidAt: payment.paidAt ? payment.paidAt.toISOString() : null,
     }))
   );
+});// -------------------------------
+// Decorator Application Route
+// -------------------------------
+// Inside run() after initializing collections
+let decoratorCollection = db.collection('decorators');
+
+// Get all decorators (optionally filter by status)
+app.get('/decorators', async (req, res) => {
+  try {
+    const query = {};
+    if (req.query.status) query.status = req.query.status;
+
+    const decorators = await decoratorCollection.find(query).toArray();
+    res.send(decorators);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: 'Failed to load decorators' });
+  }
 });
