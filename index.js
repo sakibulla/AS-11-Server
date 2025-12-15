@@ -612,4 +612,51 @@ app.get('/decorators', async (req, res) => {
     console.error(err);
     res.status(500).send({ message: 'Failed to load decorators' });
   }
+});/ Get decorator by ID
+// PATCH /decorators/:id
+app.patch('/decorators/:id', async (req, res) => {
+    try {
+        const { status } = req.body;
+        const { id } = req.params;
+
+        const query = { _id: new ObjectId(id) };
+
+        // Fetch decorator first
+        const decorator = await decoratorCollection.findOne(query);
+        if (!decorator) return res.status(404).json({ message: 'Decorator not found' });
+
+        const updatedDoc = { $set: { status } };
+        const result = await decoratorCollection.updateOne(query, updatedDoc);
+
+        // Update user role if approved
+        if (status === 'approved') {
+            await usersCollection.updateOne({ email: decorator.email }, { $set: { role: 'decorator' } });
+        }
+
+        res.json(result);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Failed to update decorator status' });
+    }
+});
+app.delete('/decorators/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Make sure id is a valid ObjectId
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid ID' });
+    }
+
+    const result = await decoratorCollection.deleteOne({ _id: new ObjectId(id) });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ message: 'Decorator not found' });
+    }
+
+    res.json({ success: true, message: 'Decorator deleted successfully' });
+  } catch (err) {
+    console.error('Delete error:', err);
+    res.status(500).json({ message: 'Failed to delete decorator' });
+  }
 });
