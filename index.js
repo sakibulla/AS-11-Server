@@ -453,3 +453,42 @@ app.patch('/bookings/:id/status', async (req, res) => {
   }
 });
 
+// -------------------------------
+    // Stripe Checkout Session
+    // -------------------------------
+    app.post('/create-checkout-session', async (req, res) => {
+      const { id, cost, parcelName, parcelId, senderEmail } = req.body;
+      const amount = parseInt(cost) * 100;
+
+      try {
+        const session = await stripe.checkout.sessions.create({
+          payment_method_types: ['card'],
+          line_items: [
+            {
+              price_data: {
+                currency: 'USD',
+                product_data: { name: parcelName },
+                unit_amount: amount,
+              },
+              quantity: 1,
+            },
+          ],
+          mode: 'payment',
+          customer_email: senderEmail,
+          metadata: { bookingId: id, parcelName, parcelId }, // ✅ Add parcel info
+          success_url: `${process.env.SITE_DOMAIN}/dashboard/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${process.env.SITE_DOMAIN}/dashboard/payment-cancelled`,
+        });
+
+        // Save session ID to booking
+        await bookingsCollection.updateOne(
+          { _id: new ObjectId(id) },
+          { $set: { sessionId: session.id, status: 'pending' } }
+        );
+
+        res.json({ url: session.url });
+      } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Failed to create checkout session' });
+      }
+    });
