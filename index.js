@@ -168,3 +168,57 @@ app.post('/users', async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
+
+    app.get('/services', async (req, res) => {
+      const result = await serviceCollection.find().toArray();
+      res.json(result.map(formatDoc));
+    });
+
+    app.get('/services/:id', async (req, res) => {
+      const { id } = req.params;
+      if (!ObjectId.isValid(id)) return res.status(400).json({ success: false, message: "Invalid ID" });
+      const result = await serviceCollection.findOne({ _id: new ObjectId(id) });
+      if (!result) return res.status(404).json({ success: false, message: "Service not found" });
+      res.json({ success: true, result: formatDoc(result) });
+    });
+
+    app.post('/services', async (req, res) => {
+      const data = req.body;
+      const result = await serviceCollection.insertOne(data);
+      res.json({ ...data, _id: result.insertedId.toString() });
+    });
+
+    app.put('/services/:id', async (req, res) => {
+      const { id } = req.params;
+      const updatedData = req.body;
+      const result = await serviceCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: updatedData }
+      );
+      res.json(result);
+    });
+
+    app.delete('/services/:id', async (req, res) => {
+      const { id } = req.params;
+      const result = await serviceCollection.deleteOne({ _id: new ObjectId(id) });
+      res.json(result);
+    });
+
+
+    // -------------------------------
+    // Bookings Routes
+    // -------------------------------
+app.get('/bookings', async (req, res) => {
+  const { userEmail } = req.query;
+  const query = userEmail ? { userEmail } : {};
+  const bookings = await bookingsCollection.find(query).toArray();
+
+  // Ensure bookingStatus always exists
+  res.json(
+    bookings.map(doc => ({
+      ...formatDoc(doc),
+      bookingStatus: doc.bookingStatus || 'Pending', // default to Pending if missing
+      status: doc.status || 'pending',               // also return payment status
+    }))
+  );
+});
