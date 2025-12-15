@@ -222,3 +222,107 @@ app.get('/bookings', async (req, res) => {
     }))
   );
 });
+app.delete('/bookings/:id', async (req, res) => {
+  const { id } = req.params;
+
+  if (!ObjectId.isValid(id)) {
+    return res.status(400).json({ success: false, message: "Invalid booking ID" });
+  }
+
+  const result = await bookingsCollection.deleteOne({ _id: new ObjectId(id) });
+
+  if (result.deletedCount === 0) {
+    return res.status(404).json({ success: false, message: "Booking not found" });
+  }
+
+  res.json({ success: true, message: "Booking removed successfully" });
+});
+
+    app.get('/bookings/:id', async (req, res) => {
+      const { id } = req.params;
+      if (!ObjectId.isValid(id)) return res.status(400).json({ success: false, message: "Invalid booking ID" });
+      const booking = await bookingsCollection.findOne({ _id: new ObjectId(id) });
+      if (!booking) return res.status(404).json({ success: false, message: "Booking not found" });
+      res.json({ success: true, result: formatDoc(booking) });
+    });
+
+
+app.post('/bookings', async (req, res) => {
+  const booking = req.body;
+
+  if (!booking.userName || !booking.userEmail || !booking.serviceId || !booking.bookingDate || !booking.location) {
+    return res.status(400).json({ error: 'Missing required booking fields' });
+  }
+
+  booking.status = 'pending';           // existing field
+  booking.bookingStatus = 'unpaid';     // new field
+
+  const result = await bookingsCollection.insertOne(booking);
+
+  res.json({ ...booking, _id: result.insertedId.toString() });
+});
+
+// Get bookings assigned to a decorator
+app.get('/bookings/decorator/:decoratorId', async (req, res) => {
+  try {
+    const { decoratorId } = req.params;
+
+    if (!ObjectId.isValid(decoratorId)) {
+      return res.status(400).json({ success: false, message: 'Invalid decorator ID' });
+    }
+
+    const bookings = await bookingsCollection.find({ assignedTo: decoratorId }).toArray();
+    res.json(bookings.map(doc => ({ ...doc, _id: doc._id.toString() })));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Failed to fetch bookings' });
+  }
+});// Update assigned decorator for a booking
+// Update assigned decorator for a booking
+// Update assigned decorator for a booking and add earnings
+app.patch('/bookings/:id/assign-decorator', async (req, res) => {
+  const { id } = req.params;
+  let { assignedTo } = req.body;
+
+  if (!ObjectId.isValid(id))
+    return res.status(400).json({ success: false, message: 'Invalid booking ID' });
+
+  try {
+    // Normalize assignedTo
+    if (!assignedTo || assignedTo === 'unassigned') assignedTo = null;
+
+    // Get the booking
+    const booking = await bookingsCollection.findOne({ _id: new ObjectId(id) });
+    if (!booking) return res.status(404).json({ success: false, message: 'Booking not found' });
+
+    const bookingStatus = assignedTo ? 'Decorator Assigned' : 'Pending';
+
+    // Update the booking
+    const result = await bookingsCollection.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: { assignedTo, bookingStatus } }
+    );
+
+    // Update decorator earnings if assigned
+    if (assignedTo) {
+      const decorator = await decoratorCollection.findOne({ _id: new ObjectId(assignedTo) });
+      if (decorator) {
+        const newEarnings = (decorator.earnings || 0) + (booking.price || 0);
+        await decoratorCollection.updateOne(
+          { _id: new ObjectId(assignedTo) },
+          { $set: { earnings: newEarnings } }
+        );
+      }
+    }
+
+    if (result.modifiedCount === 1) {
+      res.json({ success: true, message: 'Decorator assignment updated and earnings added successfully' });
+    } else {
+      res.json({ success: false, message: 'No changes made' });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+// Analytics
