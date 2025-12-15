@@ -660,3 +660,185 @@ app.delete('/decorators/:id', async (req, res) => {
     res.status(500).json({ message: 'Failed to delete decorator' });
   }
 });
+/ GET /decorators/:id
+app.get('/decorators/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+        const decorator = await decoratorCollection.findOne({ _id: new ObjectId(id) });
+
+        if (!decorator) return res.status(404).json({ message: 'Decorator not found' });
+
+        res.json(decorator);
+    } catch (err) {
+        res.status(400).json({ message: 'Invalid ID format' });
+    }
+});
+
+
+
+app.post('/decorator', async (req, res) => {
+  try {
+    const { name, email } = req.body;
+
+    if (!name || !email) {
+      return res.status(400).json({ success: false, message: 'Name and email are required' });
+    }
+
+    const newApplication = {
+      name,
+      email,
+      status: 'pending',      // decorator status
+      createdAt: new Date(),  // timestamp
+      earnings: 0
+    };
+
+    const result = await decoratorCollection.insertOne(newApplication);
+
+    res.status(201).json({
+      success: true,
+      message: 'Decorator application submitted successfully',
+      applicationId: result.insertedId.toString()
+    });
+  } catch (err) {
+    console.error('Failed to submit decorator application:', err);
+    res.status(500).json({ success: false, message: 'Failed to submit decorator application' });
+  }
+});
+
+
+/ GET /decorators/:id
+app.get('/decorators/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+        const decorator = await decoratorCollection.findOne({ _id: new ObjectId(id) });
+
+        if (!decorator) return res.status(404).json({ message: 'Decorator not found' });
+
+        res.json(decorator);
+    } catch (err) {
+        res.status(400).json({ message: 'Invalid ID format' });
+    }
+});
+
+
+
+app.post('/decorator', async (req, res) => {
+  try {
+    const { name, email } = req.body;
+
+    if (!name || !email) {
+      return res.status(400).json({ success: false, message: 'Name and email are required' });
+    }
+
+    const newApplication = {
+      name,
+      email,
+      status: 'pending',      // decorator status
+      createdAt: new Date(),  // timestamp
+      earnings: 0
+    };
+
+    const result = await decoratorCollection.insertOne(newApplication);
+
+    res.status(201).json({
+      success: true,
+      message: 'Decorator application submitted successfully',
+      applicationId: result.insertedId.toString()
+    });
+  } catch (err) {
+    console.error('Failed to submit decorator application:', err);
+    res.status(500).json({ success: false, message: 'Failed to submit decorator application' });
+  }
+});
+
+
+/ GET /decorators/:id
+app.get('/decorators/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+        const decorator = await decoratorCollection.findOne({ _id: new ObjectId(id) });
+
+        if (!decorator) return res.status(404).json({ message: 'Decorator not found' });
+
+        res.json(decorator);
+    } catch (err) {
+        res.status(400).json({ message: 'Invalid ID format' });
+    }
+});
+
+
+
+app.post('/decorator', async (req, res) => {
+  try {
+    const { name, email } = req.body;
+
+    if (!name || !email) {
+      return res.status(400).json({ success: false, message: 'Name and email are required' });
+    }
+
+    const newApplication = {
+      name,
+      email,
+      status: 'pending',      // decorator status
+      createdAt: new Date(),  // timestamp
+      earnings: 0
+    };
+
+    const result = await decoratorCollection.insertOne(newApplication);
+
+    res.status(201).json({
+      success: true,
+      message: 'Decorator application submitted successfully',
+      applicationId: result.insertedId.toString()
+    });
+  } catch (err) {
+    console.error('Failed to submit decorator application:', err);
+    res.status(500).json({ success: false, message: 'Failed to submit decorator application' });
+  }
+});
+
+
+// GET /decorators/:id
+app.get('/decorators/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+        const decorator = await decoratorCollection.findOne({ _id: new ObjectId(id) });
+
+        if (!decorator) return res.status(404).json({ message: 'Decorator not found' });
+
+        res.json(decorator);
+    } catch (err) {
+        res.status(400).json({ message: 'Invalid ID format' });
+    }
+});
+
+
+
+app.post('/decorator', async (req, res) => {
+  try {
+    const { name, email } = req.body;
+
+    if (!name || !email) {
+      return res.status(400).json({ success: false, message: 'Name and email are required' });
+    }
+
+    const newApplication = {
+      name,
+      email,
+      status: 'pending',      // decorator status
+      createdAt: new Date(),  // timestamp
+      earnings: 0
+    };
+
+    const result = await decoratorCollection.insertOne(newApplication);
+
+    res.status(201).json({
+      success: true,
+      message: 'Decorator application submitted successfully',
+      applicationId: result.insertedId.toString()
+    });
+  } catch (err) {
+    console.error('Failed to submit decorator application:', err);
+    res.status(500).json({ success: false, message: 'Failed to submit decorator application' });
+  }
+});
