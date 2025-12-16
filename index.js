@@ -519,6 +519,20 @@ app.get('/decorators', async (req, res) => {
     res.status(500).send({ message: 'Failed to load decorators' });
   }
 });
+app.get('/decorators/approved', async (req, res) => {
+  try {
+    const decorators = await decoratorCollection
+      .find({ status: 'approved' }) // only approved
+      .project({ _id: 1, name: 1 }) // only id and name
+      .toArray();
+
+    res.send(decorators);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: 'Failed to load approved decorators' });
+  }
+});
+
 
 
 app.patch('/decorators/:id', async (req, res) => {
